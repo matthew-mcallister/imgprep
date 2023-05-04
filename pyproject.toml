@@ -8,7 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pygobject = "^3.44.1"
+pyqt6 = "^6.5.0"
 
 [tool.poetry.group.dev.dependencies]
 autopep8 = "^2.0.2"

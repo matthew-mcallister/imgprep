@@ -1,39 +1,55 @@
 import sys
-from typing import Any
+from PyQt6.QtGui import QImage, QPixmap
 
-import gi
+from PyQt6.QtWidgets import QApplication, QGridLayout, QHBoxLayout, QLabel, QLayout, QScrollArea, QWidget
 
-# fmt: off
-gi.require_version('Adw', '1')
-from gi.repository import Adw  # type: ignore
-gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk  # type: ignore
-# fmt: on
+from imgprep.project import Project
+from imgprep.util import get_logger
 
 
-class MainWindow(Gtk.ApplicationWindow):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+logger = get_logger('imgprep')
 
 
-class App(Adw.Application):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.connect('activate', self.on_activate)
+class ImageGrid(QScrollArea):
+    def __init__(self, project: Project) -> None:
+        super().__init__()
 
-    def on_activate(self, app):
-        self.win = MainWindow(application=app)
-        self.win.present()
+        self.grid = QGridLayout()
+        for i, img in enumerate(project.images):
+            if i > 100:
+                # TODO: Lazy load large directories
+                break
+            image = QImage(img.path)
+            pixmap = QPixmap.fromImage(image)
+            pixmap = pixmap.scaledToHeight(200)
+            label = QLabel()
+            label.setPixmap(pixmap)
+            self.grid.addWidget(label, i // 4, i % 4)
+
+        self.inner = QWidget()
+        self.inner.setLayout(self.grid)
+        self.setWidget(self.inner)
 
 
-def on_activate(app: Any) -> None:
-    win = Gtk.ApplicationWindow(application=app)
-    win.present()
+class MainWindow(QWidget):
+    def __init__(self) -> None:
+        super().__init__()
+
+        p = Project('.')
+
+        self.image_grid = ImageGrid(p)
+        self.layout_ = QHBoxLayout()
+        self.layout_.addWidget(self.image_grid)
+        self.setLayout(self.layout_)
+
+        self.setWindowTitle('ImgPrep')
 
 
-def main():
-    app = App(application_id='dev.imgprep.App')
-    app.run(sys.argv)
+def main() -> None:
+    app = QApplication(sys.argv)
+    main = MainWindow()
+    main.show()
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':
